@@ -1,8 +1,6 @@
 
 import sys
 
-sys.path.append("../../../mtxPython/src")
-
 import wx
 from gui.ImageProvider  import ImageProvider
 
