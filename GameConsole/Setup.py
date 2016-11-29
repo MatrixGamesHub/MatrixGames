@@ -3,9 +3,6 @@ from distutils.core import setup
 import py2exe, sys, os
 
 sys.path.insert(0, "src")
-sys.path.append("../../../libraries/mtxPython")
-
-
 sys.argv.append('py2exe')
 
 logo = os.path.join("res","icon", "logo.ico")
@@ -111,5 +108,5 @@ setup(
               },
     windows = [targetWxGameConsole],
     zipfile = None,
-    data_files = GetGamesFiles("../../Games"),
+    data_files = GetGamesFiles("../Games"),
 )
