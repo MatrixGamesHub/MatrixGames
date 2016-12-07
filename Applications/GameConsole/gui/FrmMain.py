@@ -29,7 +29,7 @@ class FrmMain(wx.Frame):
         self.SetSize(wx.Size(300, 300))
         self.SetSize(wx.Size(720, 600))
 
-        self.SetTitle("Matrix Games")
+        self.SetTitle("Matrix Games - Game Console")
         self.SetIcons(self.GetFrameMainIconBundle())
 
         self.CenterOnScreen()
@@ -56,7 +56,7 @@ class FrmMain(wx.Frame):
         self._lbGames.SetSelection(0)
         self._lbGames.SetFocus()
 
-        self._rtGameInfo = rt.RichTextCtrl(self, style=wx.VSCROLL | wx.NO_BORDER | wx.richtext.RE_READONLY)
+        self._rtGameInfo = rt.RichTextCtrl(self, style=wx.VSCROLL | wx.NO_BORDER | rt.RE_READONLY)
         self._rtGameInfo.SetBackgroundColour(wx.BLACK)
         self._rtGameInfo.Disable()
 
