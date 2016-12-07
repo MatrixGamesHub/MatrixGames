@@ -1,15 +1,20 @@
 
 import mtx
-from .Levels import Levels
+
+Levels = [{'name':    'Level 1',
+           'plan':   ['#######',
+                      '#1#   #',
+                      '# # # #',
+                      '#   # #',
+                      '### # #',
+                      '#t    #',
+                      '#######']}]
 
 
-class Sokoban(mtx.Game):
-
-    def GetAuthor():
-        return "Tobias Stampfl"
+class Maze(mtx.Game):
 
     def GetDescription():
-        return """Sokoban is a transport puzzle, in which you have to push boxes around in a warehouse, trying to get them to storage locations."""
+        return """Control through a labyrinth, find all the keys and go to the exit to solve the level."""
 
     def OnInit(self, settings):
         self._boxCount    = None
@@ -25,12 +30,12 @@ class Sokoban(mtx.Game):
         self._solvedCount = level.GetObjectCount("B")
 
     def OnTriggerEnter(self, trigger, source):
-        if trigger == 't' and source == 'b':
+        if source == 'b' and trigger == 't':
             self._solvedCount += 1
 
             if self._boxCount == self._solvedCount:
                 self.NextLevel()
 
     def OnTriggerLeave(self, trigger, source):
-        if trigger == 't' and source == 'b':
+        if source == 'b' and trigger == 't':
             self._solvedCount -= 1

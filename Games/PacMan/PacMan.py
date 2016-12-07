@@ -12,7 +12,6 @@ class PacMan(mtx.Game):
         return """Control Pac-Man through a maze, eating pac-dots. When all pac-dots are eaten, Pac-Man is taken to the next stage."""
 
     def OnInit(self, settings):
-        self._levelNo = -1
         self._dotCount = None
         self._t = 0.0
         self._speed = 8
@@ -20,13 +19,12 @@ class PacMan(mtx.Game):
         self._nextDirection = None
         self._direction = None
 
-    def GetNextLevel(self):
-        if self._levelNo < len(Levels) - 1:
-            self._levelNo += 1
-            return mtx.Level.CreateByDef(Levels[self._levelNo])
+    def GetNextLevel(self, number):
+        if number <= len(Levels):
+            return mtx.Level.Create(Levels[number - 1])
         return None
 
-    def OnLevelStart(self, level, isReset):
+    def OnLevelStart(self, level, reset):
         self._player = level.GetPlayer(1)
         self._dotCount = level.GetObjectCount('.')
         self._t = 0.0

@@ -14,19 +14,17 @@ class Wesp(mtx.Game):
         return """Wesp is an elimination puzzles, in which you have to move or jump on tiles to eliminate them until all tiles are gone."""
 
     def OnInit(self, settings):
-        self._levelNo = -1
         self._tileCount = None
 
-        settings.cellAccessWhitelist = '+'
+        settings.cellAccessBlacklist = ' '
 
-    def GetNextLevel(self):
+    def GetNextLevel(self, number):
         #return self._GenerateLevel(8, 8, 15, 2)
-        if self._levelNo < len(Levels) - 1:
-            self._levelNo += 1
-            return mtx.Level.CreateByDef(Levels[self._levelNo])
+        if number <= len(Levels):
+            return mtx.Level.Create(Levels[number - 1])
         return None
 
-    def OnLevelStart(self, level, isReset):
+    def OnLevelStart(self, level, reset):
         self._tileCount = level.GetObjectCount("+")
 
     def OnRemove(self, removable, source):

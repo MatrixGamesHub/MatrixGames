@@ -2,10 +2,12 @@
 from distutils.core import setup
 import py2exe, sys, os
 
-sys.path.insert(0, "src")
+gameConsolePath = 'Applications/GameConsole'
+
+sys.path.insert(0, gameConsolePath)
 sys.argv.append('py2exe')
 
-logo = os.path.join("res","icon", "logo.ico")
+logo = os.path.join('build/logo.ico')
 
 distDir = "dist/MatrixGames"
 
@@ -67,7 +69,7 @@ manifestVersion="1.0">
 </assembly> """
 
 targetWxGameConsole = Target(
-    script = "src/GameConsole.py",
+    script = os.path.join(gameConsolePath, 'GameConsole.py'),
     other_resources = [(RT_MANIFEST, 1, MANIFEST % dict(prog="Matrix Games - Game Console"))],
     icon_resources = [(1, logo)],
     )
@@ -108,5 +110,5 @@ setup(
               },
     windows = [targetWxGameConsole],
     zipfile = None,
-    data_files = GetGamesFiles("../Games"),
+    data_files = GetGamesFiles("Games"),
 )

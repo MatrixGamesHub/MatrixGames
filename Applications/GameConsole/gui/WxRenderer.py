@@ -101,6 +101,8 @@ class WxRenderer(mtx.Renderer):
                                 self._margin.y + self._padding.y + y * self._pixelSize + 1,
                                 self._pixelSize - 2, self._pixelSize - 2, 2)
 
+        del gc
+
     def _DrawCell(self, cell):
         colour = wx.BLACK
         obj = cell.GetFirstObject()
