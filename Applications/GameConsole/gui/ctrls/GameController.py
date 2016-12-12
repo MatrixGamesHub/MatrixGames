@@ -61,6 +61,9 @@ class GameController(wx.VListBox):
             self.SetSelection(prev)
 
     def SetSelection(self, sel):
+        if sel < 0 or sel >= self.GetItemCount():
+            return
+
         wx.VListBox.SetSelection(self, sel)
         self._PostGameEvent(GameSelectEvent, sel)
 
