@@ -7,27 +7,48 @@ GameStartEvent, EVT_GAME_START = wx.lib.newevent.NewEvent()
 GameStopEvent, EVT_GAME_STOP = wx.lib.newevent.NewEvent()
 
 
-class GameListBox(wx.VListBox):
+class GameController(wx.VListBox):
 
     def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0,
-                  name=wx.VListBoxNameStr, games=None):
+                  name=wx.VListBoxNameStr, gameLoader=None):
         wx.VListBox.__init__(self, parent, id, pos, size, style | wx.NO_BORDER, name)
-        self.Bind(wx.EVT_LISTBOX_DCLICK, self._OnActivate)
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self._OnDClick)
         self.Bind(wx.EVT_LISTBOX, self._OnSelect)
 
-        self._games = games
+        self._gameLoader = gameLoader
         self.SetBackgroundColour(wx.BLACK)
-        self.SetItemCount(len(games))
 
         self._runningIdx = -1
 
-    def _OnActivate(self, evt):
-        self.Activate()
+        self.Reload()
+
+    def _OnDClick(self, evt):
+        self.Start()
         evt.Skip()
 
     def _OnSelect(self, evt):
-        wx.PostEvent(self, GameSelectEvent(game=self._games[evt.GetInt()]))
+        self._PostGameEvent(GameSelectEvent, evt.GetInt())
         evt.Skip()
+
+    def _PostGameEvent(self, evtClass, gameIdx):
+        gameClass = self._gameLoader.GetGameClass(gameIdx)
+        evt = evtClass(gameClass=gameClass, gameName=gameClass.GetName())
+        wx.PostEvent(self, evt)
+
+    def Reload(self):
+        sel = self.GetSelection()
+        runningIdx = self._runningIdx
+        self.Stop()
+        self._gameLoader.Load()
+        self.SetItemCount(self._gameLoader.GetGamesCount())
+
+        if sel < self._gameLoader.GetGamesCount():
+            self.SetSelection(sel)
+
+        if runningIdx < self._gameLoader.GetGamesCount():
+            self.Start(runningIdx)
+
+        self.Refresh()
 
     def SelectNext(self):
         next = self.GetSelection() + 1
@@ -41,27 +62,34 @@ class GameListBox(wx.VListBox):
 
     def SetSelection(self, sel):
         wx.VListBox.SetSelection(self, sel)
-        wx.PostEvent(self, GameSelectEvent(game=self._games[sel]))
+        self._PostGameEvent(GameSelectEvent, sel)
 
-    def Activate(self):
-        sel = self.GetSelection()
-        if sel == self._runningIdx:
+    def Start(self, idx=None):
+        if idx is None:
+            idx = self.GetSelection()
+
+        if idx == self._runningIdx:
             return
 
         if self._runningIdx != -1:
-            wx.PostEvent(self, GameStopEvent(game=self._games[self._runningIdx]))
+            self._PostGameEvent(GameStopEvent, self._runningIdx)
 
-        self._runningIdx = sel
-
-        wx.PostEvent(self, GameStartEvent(game=self._games[self._runningIdx]))
+        self._runningIdx = idx
+        self._PostGameEvent(GameStartEvent, self._runningIdx)
 
         self.Refresh()
 
-    def OnDrawItem(self, dc, rect, n):
+    def Stop(self):
+        if self._runningIdx != -1:
+            self._PostGameEvent(GameStopEvent, self._runningIdx)
+            self._runningIdx = -1
+            self.Refresh()
+
+    def OnDrawItem(self, dc, rect, idx):
         font = self.GetFont()
         font.SetPointSize(12)
 
-        if self.GetSelection() == n:
+        if self.GetSelection() == idx:
             c = wx.WHITE
             font.SetWeight(wx.FONTWEIGHT_BOLD)
         else:
@@ -70,18 +98,18 @@ class GameListBox(wx.VListBox):
         dc.SetFont(font)
 
         dc.SetTextForeground(c)
-        dc.DrawLabel(self._games[n].GetName(), rect,
+        dc.DrawLabel(self._gameLoader.GetGameName(idx), rect,
                      wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
 
-    def OnDrawBackground(self, dc, rect, n):
+    def OnDrawBackground(self, dc, rect, idx):
         dc.SetPen(wx.Pen(wx.BLACK))
         dc.SetBrush(wx.Brush(wx.BLACK))
 
         dc.DrawRectangle(rect)
 
-        if n in (self.GetSelection(), self._runningIdx):
-            if n == self._runningIdx:
-                if n == self.GetSelection():
+        if idx in (self.GetSelection(), self._runningIdx):
+            if idx == self._runningIdx:
+                if idx == self.GetSelection():
                     cg1 = ColourGradient(wx.Colour(0, 0, 0), wx.Colour(0, 100, 0), rect.width // 2 + 1)
                     cg2 = ColourGradient(wx.Colour(0, 0, 0), wx.Colour(0, 255, 0), rect.width // 2 + 1)
                 else:
@@ -105,5 +133,5 @@ class GameListBox(wx.VListBox):
 
     # This method must be overridden.  It should return the height
     # required to draw the n'th item.
-    def OnMeasureItem(self, n):
+    def OnMeasureItem(self, idx):
         return 30

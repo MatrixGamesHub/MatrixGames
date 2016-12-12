@@ -1,4 +1,5 @@
 
+import os
 import sys
 
 import wx
@@ -7,25 +8,23 @@ from gui.ImageProvider  import ImageProvider
 import mtx
 import mtxNet
 
-import imp
-Games = imp.load_module('Games', *imp.find_module('Games', ['.', '../..']))
-
 
 class GameConsoleApp(wx.App):
 
     def OnInit(self):
         ImageProvider.Init()
 
+        gameLoader = mtx.GameLoader('./Games', '../../Games')
         gameConsole = mtx.GameConsole()
 
-        ctrlHandler = mtxNet.ControllerHandler(gameConsole, Games.GameList)
+        ctrlHandler = mtxNet.ControllerHandler(gameConsole, gameLoader)
         ctrlServer = mtxNet.ControllerServer(50505, ctrlHandler)
         ctrlServer.Run()
 
         #ctrlHandler.LoadGame("Sokoban")
 
         from gui.FrmMain import FrmMain
-        frmMain = FrmMain(None, gameConsole=gameConsole, games=Games.GameList)
+        frmMain = FrmMain(None, gameConsole=gameConsole, gameLoader=gameLoader)
         frmMain.Show()
         return True
 

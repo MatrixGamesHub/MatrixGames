@@ -5,28 +5,29 @@ import wx.lib.agw.aui as aui
 
 import mtx
 from gui.WxRenderer import WxRenderer
-from gui.ctrls.GameListBox import GameListBox, EVT_GAME_SELECT, EVT_GAME_START, EVT_GAME_STOP
+from gui.ctrls.GameController import GameController, EVT_GAME_SELECT, EVT_GAME_START, EVT_GAME_STOP
 
 
 class FrmMain(wx.Frame):
 
     def __init__(self, parent, id=wx.ID_ANY, title="", pos=wx.DefaultPosition, size=wx.DefaultSize,
-                 style=wx.DEFAULT_FRAME_STYLE, name=wx.FrameNameStr, gameConsole=None, games=None):
+                 style=wx.DEFAULT_FRAME_STYLE, name=wx.FrameNameStr, gameConsole=None, gameLoader=None):
         wx.Frame.__init__(self, parent, id, title, pos, size, style, name)
+        self.SetBackgroundColour(wx.BLACK)
+
         self.Bind(wx.EVT_CLOSE, self._OnClose)
         self.Bind(wx.EVT_CHAR_HOOK, self._OnKeyDown)
 
         self._gameConsole = gameConsole
-        self._games = games
+        self._gameLoader = gameLoader
         self._curGame = None
 
-        self._init_ctrls(parent, games)
+        self._init_ctrls(parent)
 
         self._timer = wx.Timer(self)
         self._timer.Start(20)
         self.Bind(wx.EVT_TIMER, self._OnTimer, self._timer)
 
-        self.SetSize(wx.Size(300, 300))
         self.SetSize(wx.Size(720, 600))
 
         self.SetTitle("Matrix Games - Game Console")
@@ -43,18 +44,21 @@ class FrmMain(wx.Frame):
         ib.AddIcon(wx.ArtProvider.GetIcon('logo_64'))
         return ib
 
-    def _init_ctrls(self, parent, games):
-        self.SetBackgroundColour(wx.BLACK)
+    def _init_ctrls(self, parent):
+        self._statusBar = wx.StatusBar(self)
+        self._statusBar.SetBackgroundColour(wx.BLACK)
+        self.SetStatusBar(self._statusBar)
 
         self._pnlField = wx.Panel(self)
         self._gameConsole.RegisterRenderer(WxRenderer(self._pnlField))
 
-        self._lbGames = GameListBox(self, games=games)
-        self._lbGames.Bind(EVT_GAME_SELECT, self._OnGameSelect)
-        self._lbGames.Bind(EVT_GAME_START, self._OnGameStart)
-        self._lbGames.Bind(EVT_GAME_STOP, self._OnGameStop)
-        self._lbGames.SetSelection(0)
-        self._lbGames.SetFocus()
+        self._gameCtrl = GameController(self, gameLoader=self._gameLoader)
+        self._gameCtrl.Bind(EVT_GAME_SELECT, self._OnGameSelect)
+        self._gameCtrl.Bind(EVT_GAME_START, self._OnGameStart)
+        self._gameCtrl.Bind(EVT_GAME_STOP, self._OnGameStop)
+        self._gameCtrl.SetSelection(0)
+        self._gameCtrl.SetFocus()
+        self._gameCtrl.SetBackgroundColour(wx.BLACK)
 
         self._rtGameInfo = rt.RichTextCtrl(self, style=wx.VSCROLL | wx.NO_BORDER | rt.RE_READONLY)
         self._rtGameInfo.SetBackgroundColour(wx.BLACK)
@@ -76,7 +80,7 @@ class FrmMain(wx.Frame):
                                                     CenterPane().
                                                     PaneBorder(False))
 
-        self._auiMgr.AddPane(self._lbGames,
+        self._auiMgr.AddPane(self._gameCtrl,
                              aui.AuiPaneInfo().Name('games').
                                                     Left().
                                                     Layer(0).
@@ -103,7 +107,7 @@ class FrmMain(wx.Frame):
         self._auiMgr.Update()
 
     def _OnGameSelect(self, evt):
-        game = evt.game
+        gameClass = evt.gameClass
 
         self._rtGameInfo.Clear()
         self._rtGameInfo.BeginTextColour(wx.WHITE)
@@ -116,7 +120,7 @@ class FrmMain(wx.Frame):
 
         self._rtGameInfo.BeginLeftIndent(40)
         self._rtGameInfo.BeginTextColour(wx.Colour(200, 200, 200))
-        self._rtGameInfo.WriteText(game.GetAuthor())
+        self._rtGameInfo.WriteText(gameClass.GetAuthor())
         self._rtGameInfo.Newline()
         self._rtGameInfo.EndTextColour()
         self._rtGameInfo.EndLeftIndent()
@@ -133,7 +137,7 @@ class FrmMain(wx.Frame):
 
         self._rtGameInfo.BeginLeftIndent(40)
         self._rtGameInfo.BeginTextColour(wx.Colour(200, 200, 200))
-        self._rtGameInfo.WriteText(str(game.GetMaxPlayers()))
+        self._rtGameInfo.WriteText(str(gameClass.GetMaxPlayers()))
         self._rtGameInfo.Newline()
         self._rtGameInfo.EndTextColour()
         self._rtGameInfo.EndLeftIndent()
@@ -150,24 +154,25 @@ class FrmMain(wx.Frame):
 
         self._rtGameInfo.BeginLeftIndent(40)
         self._rtGameInfo.BeginTextColour(wx.Colour(200, 200, 200))
-        self._rtGameInfo.WriteText(game.GetDescription())
+        self._rtGameInfo.WriteText(gameClass.GetDescription())
         self._rtGameInfo.Newline()
         self._rtGameInfo.EndTextColour()
         self._rtGameInfo.EndLeftIndent()
 
     def _OnGameStart(self, evt):
-        self.StartGame(evt.game)
+        self.StartGame(evt.gameClass)
 
     def _OnGameStop(self, evt):
         self.StopGame()
 
-    def StartGame(self, game):
-        self._curGame = game()
+    def StartGame(self, gameClass):
+        self._curGame = gameClass()
         self._gameConsole.LoadGame(self._curGame)
         self._pnlField.SetFocus()
 
     def StopGame(self):
         self._curGame = None
+        self._gameConsole.StopGame()
 
     def _OnTimer(self, evt):
         self._gameConsole.Idle()
@@ -180,23 +185,25 @@ class FrmMain(wx.Frame):
             if self._curGame is None:
                 self.Close()
             else:
-                self.StopGame()
-        if keyCode == wx.WXK_RETURN:
-            self._lbGames.Activate()
+                self._gameCtrl.Stop()
+        if keyCode == wx.WXK_F5:
+            self._gameCtrl.Reload()
+        elif keyCode == wx.WXK_RETURN:
+            self._gameCtrl.Start()
         elif keyCode == 85:
             self._gameConsole.Undo()
         elif keyCode == 82:
             self._gameConsole.ResetLevel()
         elif keyCode == wx.WXK_UP:
             if self._curGame is None:
-                self._lbGames.SelectPrev()
+                self._gameCtrl.SelectPrev()
             else:
                 self._gameConsole.MovePlayer(1, mtx.UP)
         elif keyCode == wx.WXK_RIGHT:
             self._gameConsole.MovePlayer(1, mtx.RIGHT)
         elif keyCode == wx.WXK_DOWN:
             if self._curGame is None:
-                self._lbGames.SelectNext()
+                self._gameCtrl.SelectNext()
             else:
                 self._gameConsole.MovePlayer(1, mtx.DOWN)
         elif keyCode == wx.WXK_LEFT:
@@ -215,4 +222,14 @@ class FrmMain(wx.Frame):
     def _OnClose(self, evt):
         self._timer.Stop()
         self._auiMgr.UnInit()
+
+        # START WORKARROUND:
+        # While closing the app, the background of the controls are painted white. By hiding them,
+        # the background is painted in the defined background colour (black).
+        self._pnlField.Hide()
+        self._gameCtrl.Hide()
+        self._rtGameInfo.Hide()
+        self._statusBar.Hide()
+        # END WORKARROUND:
+
         evt.Skip()

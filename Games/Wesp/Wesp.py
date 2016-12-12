@@ -2,7 +2,7 @@
 import mtx
 import random
 
-from .Levels import Levels
+from Levels import Levels
 
 
 class Wesp(mtx.Game):

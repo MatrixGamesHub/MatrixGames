@@ -1,6 +1,6 @@
 
 import mtx
-from .Levels import Levels
+from Levels import Levels
 
 
 class PacMan(mtx.Game):

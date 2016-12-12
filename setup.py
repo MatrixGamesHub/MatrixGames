@@ -7,7 +7,7 @@ gameConsolePath = 'Applications/GameConsole'
 sys.path.insert(0, gameConsolePath)
 sys.argv.append('py2exe')
 
-logo = os.path.join('build/logo.ico')
+logo = os.path.join('dist/images/logo.ico')
 
 distDir = "dist/MatrixGames"
 

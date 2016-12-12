@@ -22,11 +22,14 @@ class WxRenderer(mtx.Renderer):
 
     def ProcessActGroup(self, actGrp):
         for act in actGrp:
+            if act.id == mtx.Act.CLEAR:
+                self._level = None
+                self._InitBitmap()
+
             if act.id in mtx.Act.LEVEL:
                 self._level = act.level
                 self._InitBitmap()
                 self._DrawBitmap()
-                self._window.Refresh()
 
             if act.id == mtx.Act.SPAWN:
                 field = self._level.GetField()
@@ -75,13 +78,14 @@ class WxRenderer(mtx.Renderer):
         height -= 2 * self._margin.y
 
         if self._level is None:
-            return
+            self._pixelSize = None
+            self._padding = wx.Point(0, 0)
+        else:
+            fWidth, fHeight = self._level.GetField().GetSize()
 
-        fWidth, fHeight = self._level.GetField().GetSize()
-
-        self._pixelSize = min(width // fWidth, height // fHeight)
-        self._padding = wx.Point(max(0, (width - (self._pixelSize * fWidth)) // 2),
-                                 max(0, (height - (self._pixelSize * fHeight)) // 2))
+            self._pixelSize = min(width // fWidth, height // fHeight)
+            self._padding = wx.Point(max(0, (width - (self._pixelSize * fWidth)) // 2),
+                                     max(0, (height - (self._pixelSize * fHeight)) // 2))
 
     def _DrawPixel(self, x, y, colour):
         # Clear pixel first, to avoid relicts on the edges from antialiasing.
