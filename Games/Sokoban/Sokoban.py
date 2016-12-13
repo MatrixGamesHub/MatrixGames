@@ -24,13 +24,13 @@ class Sokoban(mtx.Game):
         self._boxCount = level.GetObjectCount("b")
         self._solvedCount = level.GetObjectCount("B")
 
-    def OnTriggerEnter(self, trigger, source):
+    def OnTriggerEnter(self, trigger, source, actGroup):
         if trigger == 't' and source == 'b':
             self._solvedCount += 1
 
             if self._boxCount == self._solvedCount:
                 self.NextLevel()
 
-    def OnTriggerLeave(self, trigger, source):
+    def OnTriggerLeave(self, trigger, source, actGroup):
         if trigger == 't' and source == 'b':
             self._solvedCount -= 1

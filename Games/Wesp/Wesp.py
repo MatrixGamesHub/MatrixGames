@@ -27,7 +27,7 @@ class Wesp(mtx.Game):
     def OnLevelStart(self, level, reset):
         self._tileCount = level.GetObjectCount("+")
 
-    def OnRemove(self, removable, source):
+    def OnRemove(self, removable, source, actGroup):
         self._tileCount -= 1
         if self._tileCount == 1:
             self.NextLevel()

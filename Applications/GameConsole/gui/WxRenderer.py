@@ -31,6 +31,10 @@ class WxRenderer(mtx.Renderer):
                 self._InitBitmap()
                 self._DrawBitmap()
 
+            if act.id == mtx.Act.REFRESH:
+                obj = self._level.GetObject(act.objId)
+                self._DrawCell(obj.GetCell())
+
             if act.id == mtx.Act.SPAWN:
                 field = self._level.GetField()
                 cell = field.GetCell(act.position)
@@ -112,7 +116,7 @@ class WxRenderer(mtx.Renderer):
         obj = cell.GetFirstObject()
         if obj is not None:
             if obj.GetSymbol() == '#':
-                colour = wx.RED
+                colour = wx.BLUE
             elif obj.GetSymbol() == '1':
                 colour = wx.WHITE
             elif obj.GetSymbol() == 'b':
@@ -122,6 +126,12 @@ class WxRenderer(mtx.Renderer):
                     colour = wx.YELLOW
             elif obj.GetSymbol() == 't':
                 colour = wx.Colour(120,  55, 0)
+            elif obj.GetSymbol() == 'k':
+                colour = wx.YELLOW
+            elif obj.GetSymbol() == 'e':
+                colour = wx.GREEN
+            elif obj.GetSymbol() == 'E':
+                colour = wx.RED
             elif obj.GetSymbol() == '+':
                 cnt = cell.GetObjectCount('+')
                 if cnt == 1:
