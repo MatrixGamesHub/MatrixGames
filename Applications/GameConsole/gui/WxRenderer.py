@@ -31,7 +31,7 @@ class WxRenderer(mtx.Renderer):
                 self._InitBitmap()
                 self._DrawBitmap()
 
-            if act.id == mtx.Act.REFRESH:
+            if act.id == mtx.Act.UPDATE:
                 obj = self._level.GetObject(act.objId)
                 self._DrawCell(obj.GetCell())
 

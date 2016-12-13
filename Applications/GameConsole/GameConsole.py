@@ -22,14 +22,19 @@ class GameConsoleApp(wx.App):
         gameLoader = mtx.GameLoader(config.GamesPath)
         gameConsole = mtx.GameConsole()
 
-        ctrlHandler = mtxNet.ControllerHandler(gameConsole, gameLoader)
-        ctrlServer = mtxNet.ControllerServer(50505, ctrlHandler)
+        self.ctrlHandler = mtxNet.ControllerHandler(gameConsole, gameLoader)
+        ctrlServer = mtxNet.ControllerServer(50505, self.ctrlHandler)
         ctrlServer.Run()
 
         from gui.FrmMain import FrmMain
         frmMain = FrmMain(None, gameConsole=gameConsole, gameLoader=gameLoader)
         frmMain.Show()
         return True
+
+    def OnExit(self):
+        if self.ctrlHandler is not None:
+            self.ctrlHandler.DisconnectAllRenderer()
+        return wx.App.OnExit(self)
 
 
 if __name__ == '__main__':
