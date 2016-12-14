@@ -13,8 +13,7 @@ from gui.LogHandler import LogHandler, StreamToLogger
 
 logging.basicConfig(level=logging.DEBUG)
 
-LOGGER = logging.getLogger(__name__)
-LOGGER.propagate = False
+LOGGER = logging.getLogger()
 
 sys.stdout = StreamToLogger(LOGGER, logging.INFO)
 sys.stderr = StreamToLogger(LOGGER, logging.ERROR)
@@ -26,6 +25,11 @@ class FrmMain(wx.Frame):
                  style=wx.DEFAULT_FRAME_STYLE, name=wx.FrameNameStr, gameConsole=None, gameLoader=None):
         wx.Frame.__init__(self, parent, id, title, pos, size, style, name)
         self.SetBackgroundColour(wx.BLACK)
+
+        # set up logging
+        self._logText = ''
+        self._logLock = Lock()
+        LOGGER.addHandler(LogHandler(self._OnLog))
 
         self.Bind(wx.EVT_CLOSE, self._OnClose)
         self.Bind(wx.EVT_CHAR_HOOK, self._OnKeyDown)
@@ -44,11 +48,6 @@ class FrmMain(wx.Frame):
 
         self.SetTitle("Matrix Games - Game Console")
         self.SetIcons(self.GetFrameMainIconBundle())
-
-        # set up logging
-        self._logText = ''
-        self._logLock = Lock()
-        LOGGER.addHandler(LogHandler(self._OnLog))
 
         self.Bind(wx.EVT_IDLE, self._OnIdle)
 

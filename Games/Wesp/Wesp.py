@@ -17,6 +17,7 @@ class Wesp(mtx.Game):
         self._tileCount = None
 
         settings.cellAccessBlacklist = ' '
+        settings.jumpingAllowed = True
 
     def GetNextLevel(self, number):
         #return self._GenerateLevel(8, 8, 15, 2)
