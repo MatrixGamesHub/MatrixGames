@@ -8,7 +8,7 @@ distPath = 'dist' if len(sys.argv) == 1 else sys.argv[1]
 app = wx.App()
 
 
-def CreateLogo(size):
+def CreateLogo(width, height):
     logo = ['-######',
             '-#1B  #',
             '### # #',
@@ -17,11 +17,15 @@ def CreateLogo(size):
             '#   #--',
             '#####--']
 
-    bmp = wx.Bitmap(size, size)
+    size = min(width, height)
+
+    bmp = wx.Bitmap(width, height)
 
     pixelSize = size // 7
     padding = 2 if size <= 64 else 3
     margin = (size - (pixelSize * 7) + padding - 1) // 2
+    marginLeft = (width - size) // 2
+    marginTop = (height - size) // 2
     radius = 0 if size <= 64 else 1
     dcBmp = wx.MemoryDC(bmp)
 
@@ -65,36 +69,44 @@ def CreateLogo(size):
                 dcPixel.Clear()
                 del dcPixel
 
-                gc.DrawBitmap(pixel, margin + x * pixelSize, margin + y * pixelSize, 1, 1)
+                gc.DrawBitmap(pixel, marginLeft + margin + x * pixelSize,
+                                     marginTop + margin + y * pixelSize, 1, 1)
 
-                path.MoveToPoint(margin + x * pixelSize, margin + (y + 1) * pixelSize - 1)
-                path.AddLineToPoint(margin + (x + 1) * pixelSize - 1, margin + (y + 1) * pixelSize - 1)
-                path.AddLineToPoint(margin + (x + 1) * pixelSize - 1, margin + y * pixelSize)
+                path.MoveToPoint(marginLeft + margin + x * pixelSize,
+                                 marginTop + margin + (y + 1) * pixelSize - 1)
+                path.AddLineToPoint(marginLeft + margin + (x + 1) * pixelSize - 1,
+                                    marginTop + margin + (y + 1) * pixelSize - 1)
+                path.AddLineToPoint(marginLeft + margin + (x + 1) * pixelSize - 1,
+                                    marginTop + margin + y * pixelSize)
 
 
             else:
-                gc.DrawRoundedRectangle(margin + x * pixelSize,
-                                        margin + y * pixelSize,
+                gc.DrawRoundedRectangle(marginLeft + margin + x * pixelSize,
+                                        marginTop + margin + y * pixelSize,
                                         pixelSize - padding,
                                         pixelSize - padding, radius)
 
                 delta = radius if radius > 0 else 1
-                path.MoveToPoint(margin + (x + 1) * pixelSize - padding + 1, margin + y * pixelSize + delta)
+                path.MoveToPoint(marginLeft + margin + (x + 1) * pixelSize - padding + 1,
+                                 marginTop + margin + y * pixelSize + delta)
                 if radius > 0:
-                    path.AddLineToPoint(margin + (x + 1) * pixelSize - padding + 1,
-                                        margin + (y + 1) * pixelSize - padding + 1 - radius)
+                    path.AddLineToPoint(marginLeft + margin + (x + 1) * pixelSize - padding + 1,
+                                        marginTop + margin + (y + 1) * pixelSize - padding + 1 - radius)
 
-                    path.AddArcToPoint( margin + (x + 1) * pixelSize - padding + 1,
-                                        margin + (y + 1) * pixelSize - padding + 1,
-                                        margin + (x + 1) * pixelSize - padding + 1 - radius,
-                                        margin + (y + 1) * pixelSize - padding + 1,
+                    path.AddArcToPoint( marginLeft + margin + (x + 1) * pixelSize - padding + 1,
+                                        marginTop + margin + (y + 1) * pixelSize - padding + 1,
+                                        marginLeft + margin + (x + 1) * pixelSize - padding + 1 - radius,
+                                        marginTop + margin + (y + 1) * pixelSize - padding + 1,
                                         radius
                                         )
-                    path.AddLineToPoint(margin + x * pixelSize + delta, margin + (y + 1) * pixelSize - padding + 1)
+                    path.AddLineToPoint(marginLeft + margin + x * pixelSize + delta,
+                                        marginTop + margin + (y + 1) * pixelSize - padding + 1)
                 else:
                     gc.SetAntialiasMode(wx.ANTIALIAS_NONE)
-                    path.AddLineToPoint(margin + (x + 1) * pixelSize - padding + 1, margin + (y + 1) * pixelSize - padding + 1)
-                    path.AddLineToPoint(margin + x * pixelSize + delta, margin + (y + 1) * pixelSize - padding + 1)
+                    path.AddLineToPoint(marginLeft + margin + (x + 1) * pixelSize - padding + 1,
+                                        marginTop + margin + (y + 1) * pixelSize - padding + 1)
+                    path.AddLineToPoint(marginLeft + margin + x * pixelSize + delta,
+                                        marginTop + margin + (y + 1) * pixelSize - padding + 1)
 
             gc.SetPen(wx.Pen(colour=wx.Colour(colour.red, colour.green, colour.blue, alpha)))
             gc.StrokePath(path)
@@ -104,10 +116,10 @@ def CreateLogo(size):
 
     del dcBmp
 
-    bmp.SaveFile('{0}/logo_{1:03d}x{1:03d}.png'.format(distPath, size), wx.BITMAP_TYPE_PNG)
+    bmp.SaveFile('{0}/logo_{1:03d}x{2:03d}.png'.format(distPath, width, height), wx.BITMAP_TYPE_PNG)
 
 if not os.path.isdir(distPath):
     os.mkdir(distPath)
 
-for size in (16, 32, 48, 64, 128, 256, 512):
-    CreateLogo(size)
+for size in ((16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 500)):
+    CreateLogo(*size)

@@ -1,11 +1,23 @@
 
+import sys
 import wx
 import wx.richtext as rt
 import wx.lib.agw.aui as aui
+import logging
+from threading import Lock
 
 import mtx
 from gui.WxRenderer import WxRenderer
 from gui.ctrls.GameController import GameController, EVT_GAME_SELECT, EVT_GAME_START, EVT_GAME_STOP
+from gui.LogHandler import LogHandler, StreamToLogger
+
+logging.basicConfig(level=logging.DEBUG)
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.propagate = False
+
+sys.stdout = StreamToLogger(LOGGER, logging.INFO)
+sys.stderr = StreamToLogger(LOGGER, logging.ERROR)
 
 
 class FrmMain(wx.Frame):
@@ -33,6 +45,13 @@ class FrmMain(wx.Frame):
         self.SetTitle("Matrix Games - Game Console")
         self.SetIcons(self.GetFrameMainIconBundle())
 
+        # set up logging
+        self._logText = ''
+        self._logLock = Lock()
+        LOGGER.addHandler(LogHandler(self._OnLog))
+
+        self.Bind(wx.EVT_IDLE, self._OnIdle)
+
         self.CenterOnScreen()
 
     @staticmethod
@@ -45,9 +64,9 @@ class FrmMain(wx.Frame):
         return ib
 
     def _init_ctrls(self, parent):
-        self._statusBar = wx.StatusBar(self)
-        self._statusBar.SetBackgroundColour(wx.BLACK)
-        self.SetStatusBar(self._statusBar)
+#        self._statusBar = wx.StatusBar(self)
+#        self._statusBar.SetBackgroundColour(wx.BLACK)
+#        self.SetStatusBar(self._statusBar)
 
         self._pnlField = wx.Panel(self)
         self._gameConsole.RegisterRenderer(WxRenderer(self._pnlField))
@@ -64,6 +83,10 @@ class FrmMain(wx.Frame):
         self._rtGameInfo.SetBackgroundColour(wx.BLACK)
         self._rtGameInfo.Disable()
 
+        self._tcLog = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE | wx.TE_READONLY | wx.NO_BORDER)
+        self._tcLog.SetBackgroundColour(wx.BLACK)
+        self._tcLog.SetForegroundColour(wx.Colour(200, 200, 200))
+
         self._auiMgr = aui.AuiManager(self)
         self._auiMgr.SetAGWFlags(self._auiMgr.GetAGWFlags() |
                                  aui.AUI_MGR_TRANSPARENT_DRAG |
@@ -78,12 +101,13 @@ class FrmMain(wx.Frame):
         self._auiMgr.AddPane(self._pnlField,
                              aui.AuiPaneInfo().Name('field').
                                                     CenterPane().
+                                                    Layer(0).
                                                     PaneBorder(False))
 
         self._auiMgr.AddPane(self._gameCtrl,
                              aui.AuiPaneInfo().Name('games').
                                                     Left().
-                                                    Layer(0).
+                                                    Layer(1).
                                                     CaptionVisible(False).
                                                     MinSize(wx.Size(150, -1)).
                                                     Floatable(False).
@@ -94,17 +118,40 @@ class FrmMain(wx.Frame):
         self._auiMgr.AddPane(self._rtGameInfo,
                              aui.AuiPaneInfo().Name('gameInfo').
                                                     Left().
-                                                    Layer(0).
+                                                    Layer(1).
                                                     CaptionVisible(False).
                                                     Floatable(False).
                                                     MaximizeButton(False).
                                                     CloseButton(False).
                                                     PaneBorder(False))
 
+        self._auiMgr.AddPane(self._tcLog,
+                             aui.AuiPaneInfo().Name('log').
+                                                    Bottom().
+                                                    Layer(2).
+                                                    BestSize(wx.Size(-1, 200)).
+                                                    CaptionVisible(False).
+                                                    MinimizeButton(True).
+                                                    Floatable(False).
+                                                    CloseButton(False).
+                                                    PaneBorder(False))
+
+
         self._auiMgr.GetPane("games").dock_proportion = 100
         self._auiMgr.GetPane("gameInfo").dock_proportion = 150
+        self._auiMgr.GetPane("log").Hide()
 
         self._auiMgr.Update()
+
+    def _OnLog(self, message):
+        with self._logLock:
+            self._logText += '%s\n' % message
+
+    def _OnIdle(self, evt):
+        with self._logLock:
+            if self._logText != '':
+               self._tcLog.AppendText(self._logText)
+               self._logText = ''
 
     def _OnGameSelect(self, evt):
         gameClass = evt.gameClass
@@ -188,34 +235,68 @@ class FrmMain(wx.Frame):
                 self._gameCtrl.Stop()
         if keyCode == wx.WXK_F5:
             self._gameCtrl.Reload()
+        elif keyCode == wx.WXK_F11:
+            pane = self._auiMgr.GetPane("field")
+            if pane.IsMaximized():
+                self._auiMgr.RestorePane(pane)
+            else:
+                self._auiMgr.MaximizePane(pane)
+
+            self._auiMgr.Update()
+
+        elif keyCode == wx.WXK_F12:
+            pane = self._auiMgr.GetPane("field")
+            if not pane.IsMaximized():
+                pane = self._auiMgr.GetPane("log")
+                if pane.IsShown():
+                    pane.Hide()
+                else:
+                    self._tcLog.ShowPosition(self._tcLog.GetLastPosition());
+                    pane.Show()
+                self._auiMgr.Update()
+
+        elif keyCode == wx.WXK_DELETE:
+            self._tcLog.Clear()
+
         elif keyCode == wx.WXK_RETURN:
             self._gameCtrl.Start()
+
         elif keyCode == 85:
             self._gameConsole.Undo()
+
         elif keyCode == 82:
             self._gameConsole.ResetLevel()
+
         elif keyCode == wx.WXK_UP:
             if self._curGame is None:
                 self._gameCtrl.SelectPrev()
             else:
                 self._gameConsole.MovePlayer(1, mtx.UP)
+
         elif keyCode == wx.WXK_RIGHT:
             self._gameConsole.MovePlayer(1, mtx.RIGHT)
+
         elif keyCode == wx.WXK_DOWN:
             if self._curGame is None:
                 self._gameCtrl.SelectNext()
             else:
                 self._gameConsole.MovePlayer(1, mtx.DOWN)
+
         elif keyCode == wx.WXK_LEFT:
             self._gameConsole.MovePlayer(1, mtx.LEFT)
+
         elif keyCode == 87:
             self._gameConsole.JumpPlayer(1, mtx.UP)
+
         elif keyCode == 68:
             self._gameConsole.JumpPlayer(1, mtx.RIGHT)
+
         elif keyCode == 83:
             self._gameConsole.JumpPlayer(1, mtx.DOWN)
+
         elif keyCode == 65:
             self._gameConsole.JumpPlayer(1, mtx.LEFT)
+
         else:
             evt.Skip()
 
@@ -229,7 +310,8 @@ class FrmMain(wx.Frame):
         self._pnlField.Hide()
         self._gameCtrl.Hide()
         self._rtGameInfo.Hide()
-        self._statusBar.Hide()
+        self._tcLog.Hide()
+#        self._statusBar.Hide()
         # END WORKARROUND:
 
         evt.Skip()

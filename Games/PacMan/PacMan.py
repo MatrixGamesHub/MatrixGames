@@ -53,7 +53,7 @@ class PacMan(mtx.Game):
         if number == 1 and direction != self._nextDirection:
             self._nextDirection = direction
 
-    def OnCollect(self, collectable, source, actGroup):
+    def OnCollect(self, collectable, source):
         self._dotCount -= 1
         if self._dotCount == 0:
             self.NextLevel()
