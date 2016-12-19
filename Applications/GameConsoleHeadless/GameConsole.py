@@ -3,12 +3,6 @@
 # Copyright (C) 2016 Jens Goepfert
 #
 
-import sys
-sys.path.append("../../../mtxPython/src")
-sys.path.append("../../../mtxPython")
-sys.path.append("/home/jens/Projects/Python/Phoenix")
-
-
 import optparse
 import os
 import time
@@ -29,7 +23,6 @@ class ConsoleApp(object):
         ctrlServer = mtxNet.ControllerServer(50505, self.ctrlHandler)
         ctrlServer.Run()
 
-    
     def MainLoop(self):
         try:
             while 1:
@@ -48,4 +41,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
